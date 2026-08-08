@@ -1,0 +1,6 @@
+{
+  "name": "The Interview Agent",
+  "description": "An autonomous AI technical interviewer platform that evaluates engineering decisions, adaptive candidate interactions, and AI system knowledge.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

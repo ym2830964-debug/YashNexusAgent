@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Candidate": {
+      "collectionName": "candidates",
+      "description": "Candidate profile data, readiness score, and completed modules",
+      "fields": {
+        "name": { "type": "string", "description": "Candidate full name" },
+        "roleTitle": { "type": "string", "description": "Target engineering role" },
+        "cohort": { "type": "string", "description": "Cohort or track" },
+        "overallReadinessScore": { "type": "number", "description": "Readiness score percentage" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    },
+    "InterviewSession": {
+      "collectionName": "interviewSessions",
+      "description": "Live AI technical interview session with candidate responses and evaluations",
+      "fields": {
+        "candidateId": { "type": "string", "description": "ID of candidate" },
+        "currentTrack": { "type": "string", "description": "Active topic track" },
+        "currentDifficulty": { "type": "string", "description": "Difficulty level" },
+        "messages": { "type": "array", "description": "Conversation messages history" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    },
+    "EvaluationReport": {
+      "collectionName": "evaluationReports",
+      "description": "Comprehensive evaluation reports for candidate performance",
+      "fields": {
+        "candidateName": { "type": "string", "description": "Candidate name" },
+        "date": { "type": "string", "description": "Report date string" },
+        "overallScore": { "type": "number", "description": "Final hiring readiness score" },
+        "hiringRecommendation": { "type": "string", "description": "Recommendation level" },
+        "updatedAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    },
+    "Feedback": {
+      "collectionName": "feedbacks",
+      "description": "User feedback and platform ratings submitted by candidates or interviewers",
+      "fields": {
+        "candidateName": { "type": "string", "description": "Name of user giving feedback" },
+        "rating": { "type": "number", "description": "1 to 5 star rating" },
+        "category": { "type": "string", "description": "Category of feedback" },
+        "comment": { "type": "string", "description": "Feedback message details" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" }
+      }
+    }
+  }
+}
