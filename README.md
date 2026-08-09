@@ -21,7 +21,7 @@ Users can:
 - Add a job description
 - Select interview type and difficulty
 - Participate in AI-generated mock interviews
-- Answer questions using text or voice
+- Answer questions using text or voice interaction 
 - Receive AI-powered performance analysis
 - Analyze answers using the STAR method
 - Track interview performance over time
