@@ -77,6 +77,7 @@ export interface ArchitectureNode {
   iconName: string;
   latencyMs: number;
   metrics: { label: string; value: string }[];
+  track?: TopicTrack;
 }
 
 export interface EvaluationReport {

@@ -300,7 +300,7 @@ Category Scores:
           </div>
 
           <div className="space-y-2.5">
-            {report.strongUnderstandings.map((str, idx) => (
+            {(report.strongUnderstandings || []).map((str, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-200 flex items-start gap-2.5 font-sans">
                 <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{str}</span>
@@ -317,7 +317,7 @@ Category Scores:
           </div>
 
           <div className="space-y-2.5">
-            {report.recommendedGrowthAreas.map((rec, idx) => (
+            {(report.recommendedGrowthAreas || []).map((rec, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-200 flex items-start gap-2.5 font-sans">
                 <TrendingUp className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>{rec}</span>
@@ -336,7 +336,7 @@ Category Scores:
         </h3>
 
         <div className="space-y-4">
-          {report.questionSummaries.map((q) => (
+          {(report.questionSummaries || []).map((q) => (
             <div key={q.questionNumber} className="p-4 rounded-xl bg-[#050816] border border-slate-800 space-y-2 text-xs">
               <div className="flex items-center justify-between font-mono">
                 <div className="flex items-center gap-2">

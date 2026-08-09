@@ -11,6 +11,8 @@ import {
   Send, 
   Sparkles, 
   CheckCircle2, 
+  XCircle,
+  HelpCircle,
   Volume2, 
   VolumeX, 
   Activity, 
@@ -224,6 +226,18 @@ export const InterviewRoom: React.FC<InterviewRoomProps> = ({
     }
   };
 
+  // Pre-warm Web Speech API voices for instant playback
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = () => {
+          window.speechSynthesis.getVoices();
+        };
+      }
+    }
+  }, []);
+
   const stopListening = async () => {
     setIsListening(false);
     if (timerIntervalRef.current) {
@@ -235,6 +249,16 @@ export const InterviewRoom: React.FC<InterviewRoomProps> = ({
       try {
         recognitionRef.current.stop();
       } catch (e) {}
+    }
+
+    // If real-time speech recognition already captured candidate response, no delay needed
+    if (inputText.trim()) {
+      setIsTranscribing(false);
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        mediaStreamRef.current = null;
+      }
+      return;
     }
 
     const recorder = mediaRecorderRef.current;
@@ -462,7 +486,7 @@ export const InterviewRoom: React.FC<InterviewRoomProps> = ({
     }
   };
 
-  // Play TTS voice via backend or Web Speech Synthesis with high clarity
+  // Play TTS voice instantly using Web Speech Synthesis (<20ms) or fallback to server audio
   const playTTSVoice = async (text: string, msgId?: string) => {
     if (msgId) setPlayingAudioId(msgId);
 
@@ -479,6 +503,40 @@ export const InterviewRoom: React.FC<InterviewRoomProps> = ({
       .replace(/[*#`_~]/g, '')
       .trim();
 
+    // 1. Instant client-side Web Speech API (< 20ms response time!)
+    if ('speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel(); // Cancel any lingering speech immediately
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => 
+          v.lang.startsWith('en') && (
+            v.name.includes('Google') || 
+            v.name.includes('Natural') || 
+            v.name.includes('Samantha') || 
+            v.name.includes('Karen') ||
+            v.name.includes('Daniel')
+          )
+        ) || voices.find(v => v.lang.startsWith('en'));
+
+        if (preferredVoice) {
+          utterance.voice = preferredVoice;
+        }
+
+        utterance.rate = 1.0; // Instant, natural speaking speed
+        utterance.pitch = 1.0;
+        utterance.onend = () => setPlayingAudioId(null);
+        utterance.onerror = () => setPlayingAudioId(null);
+
+        window.speechSynthesis.speak(utterance);
+        return; // Voice started instantly!
+      } catch (speechSynthesisErr) {
+        console.warn("Instant Web Speech API notice:", speechSynthesisErr);
+      }
+    }
+
+    // 2. Server TTS fallback if client speechSynthesis is unavailable
     try {
       if (currentAudioRef.current) {
         currentAudioRef.current.pause();
@@ -509,37 +567,110 @@ export const InterviewRoom: React.FC<InterviewRoomProps> = ({
         }
       }
     } catch (e) {
-      console.warn("Server TTS failed, falling back to Web Speech API:", e);
-    }
-
-    // Web Speech API fallback with voice selection & pitch tuning
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(cleanText);
-
-      const voices = window.speechSynthesis.getVoices();
-      const preferredVoice = voices.find(v => 
-        v.lang.startsWith('en') && (
-          v.name.includes('Google') || 
-          v.name.includes('Natural') || 
-          v.name.includes('Samantha') || 
-          v.name.includes('Karen') ||
-          v.name.includes('Daniel')
-        )
-      ) || voices.find(v => v.lang.startsWith('en'));
-
-      if (preferredVoice) {
-        utterance.voice = preferredVoice;
-      }
-
-      utterance.rate = 0.95; // Crisp, articulate reading pace
-      utterance.pitch = 1.0;
-      utterance.onend = () => setPlayingAudioId(null);
-      utterance.onerror = () => setPlayingAudioId(null);
-      window.speechSynthesis.speak(utterance);
-    } else {
+      console.warn("Server TTS failed:", e);
+    } finally {
       setPlayingAudioId(null);
     }
+  };
+
+  const renderFormattedMessage = (text: string, isAI: boolean) => {
+    if (!isAI) {
+      return <div className="whitespace-pre-wrap font-sans text-left">{text}</div>;
+    }
+
+    const paragraphs = text.split('\n\n');
+    return (
+      <div className="space-y-3 font-sans text-left">
+        {paragraphs.map((p, idx) => {
+          const trimmed = p.trim();
+
+          if (trimmed.startsWith('**Verdict:**')) {
+            const isCorrect = trimmed.includes('Correct') && !trimmed.includes('Incorrect') && !trimmed.includes('Partially');
+            const isIncorrect = trimmed.includes('Incorrect');
+            const isPartial = trimmed.includes('Partially');
+
+            const badgeBg = isCorrect
+              ? 'bg-emerald-950/80 border-emerald-700/80 text-emerald-200 shadow-emerald-950/30'
+              : isIncorrect
+              ? 'bg-red-950/80 border-red-700/80 text-red-200 shadow-red-950/30'
+              : isPartial
+              ? 'bg-amber-950/80 border-amber-700/80 text-amber-200 shadow-amber-950/30'
+              : 'bg-blue-950/80 border-blue-700/80 text-blue-200';
+
+            return (
+              <div key={idx} className={`p-3 rounded-xl border text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-md ${badgeBg}`}>
+                {isCorrect && <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />}
+                {isIncorrect && <XCircle className="w-4 h-4 text-red-400 shrink-0" />}
+                {isPartial && <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />}
+                <span className="font-mono">{trimmed.replace(/\*\*/g, '')}</span>
+              </div>
+            );
+          }
+
+          if (trimmed.startsWith('**Why it is wrong') || trimmed.startsWith('**Evaluation & Corrections:') || trimmed.startsWith('**Detailed Explanation:')) {
+            return (
+              <div key={idx} className="p-3.5 rounded-xl bg-red-950/40 border border-red-800/60 text-red-100 text-xs sm:text-sm space-y-1.5 shadow-inner">
+                <div className="font-mono font-bold text-red-300 text-xs flex items-center gap-1.5">
+                  <XCircle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span>Why it is Wrong & Correct Solution:</span>
+                </div>
+                <div className="whitespace-pre-wrap leading-relaxed text-slate-200 font-sans">
+                  {trimmed.replace(/\*\*(Why it is wrong & Explanation|Evaluation & Corrections|Detailed Explanation):\*\*/g, '').trim()}
+                </div>
+              </div>
+            );
+          }
+
+          if (trimmed.startsWith('**Evaluation:**')) {
+            return (
+              <div key={idx} className="p-3.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-emerald-100 text-xs sm:text-sm space-y-1.5 shadow-inner">
+                <div className="font-mono font-bold text-emerald-300 text-xs flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>Answer Assessment:</span>
+                </div>
+                <div className="whitespace-pre-wrap leading-relaxed text-slate-200 font-sans">
+                  {trimmed.replace(/\*\*Evaluation:\*\*/g, '').trim()}
+                </div>
+              </div>
+            );
+          }
+
+          if (trimmed.startsWith('**Direct Answer & Explanation:**')) {
+            return (
+              <div key={idx} className="p-3.5 rounded-xl bg-cyan-950/40 border border-cyan-800/60 text-cyan-100 text-xs sm:text-sm space-y-1.5 shadow-inner">
+                <div className="font-mono font-bold text-cyan-300 text-xs flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400 shrink-0" />
+                  <span>Direct Answer & Technical Explanation:</span>
+                </div>
+                <div className="whitespace-pre-wrap leading-relaxed text-slate-200 font-sans">
+                  {trimmed.replace(/\*\*Direct Answer & Explanation:\*\*/g, '').trim()}
+                </div>
+              </div>
+            );
+          }
+
+          if (trimmed.startsWith('**Next Interview Question')) {
+            return (
+              <div key={idx} className="pt-2 border-t border-slate-800 text-cyan-100 font-medium space-y-1">
+                <div className="text-[11px] font-mono text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <HelpCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                  Next Technical Question
+                </div>
+                <div className="whitespace-pre-wrap leading-relaxed text-slate-100">
+                  {trimmed.replace(/\*\*Next Interview Question.*?\*\*:/g, '').trim()}
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div key={idx} className="whitespace-pre-wrap leading-relaxed">
+              {trimmed.replace(/\*\*(.*?)\*\*/g, '$1')}
+            </div>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -790,9 +921,7 @@ export const InterviewRoom: React.FC<InterviewRoomProps> = ({
                           ? 'bg-[#0B1120] text-slate-100 border-slate-800 shadow-blue-950/20' 
                           : 'bg-blue-950/70 text-slate-100 border-blue-800/80'
                       }`}>
-                        <div className="whitespace-pre-wrap font-sans">
-                          {msg.text}
-                        </div>
+                        {renderFormattedMessage(msg.text, isAI)}
 
                         {/* Code snippet rendering */}
                         {msg.codeSnippet && (

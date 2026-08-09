@@ -43,6 +43,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-1',
     title: 'Candidate Profile Intelligence',
     subtitle: 'Learner Context Ingestion',
+    track: 'Prompt Engineering',
     description: 'Ingests completed engineering missions, GitHub commit history, past interview scores, and knowledge gap metrics.',
     technicalDetails: [
       'Ingests candidate cohort metrics and skill taxonomy',
@@ -60,6 +61,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-2',
     title: 'Curriculum & Candidate Database',
     subtitle: 'Cloud SQL (us-west1) PostgreSQL & Drizzle',
+    track: 'Vector Databases',
     description: 'Fully provisioned PostgreSQL Cloud SQL database in us-west1 storing candidate profiles, session transcripts, feedback logs, and evaluation reports with Drizzle ORM.',
     technicalDetails: [
       'Cloud SQL PostgreSQL Developer Edition active in region us-west1',
@@ -77,6 +79,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-3',
     title: 'AI Reasoning Engine',
     subtitle: 'Adaptive Difficulty Logic',
+    track: 'RAG Systems',
     description: 'Dynamically analyzes answer depth, system design rigor, and trade-off awareness to adjust follow-up question complexity.',
     technicalDetails: [
       'Powered by Gemini 3.6 Flash reasoning model',
@@ -94,6 +97,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-4',
     title: 'Autonomous Interview Agent',
     subtitle: 'Senior Engineer Persona',
+    track: 'Agentic AI',
     description: 'Acts as a Senior/Principal AI Engineer conducting the interview with realistic, probing follow-ups ("Why that DB?", "How do you handle 10M vectors?").',
     technicalDetails: [
       'Contextual persona prompting with strict technical accuracy',
@@ -111,6 +115,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-5',
     title: 'Context-Aware Conversation Memory',
     subtitle: 'Sliding Context Window',
+    track: 'Model Context Protocol (MCP)',
     description: 'Maintains multi-turn context throughout the 10-question interview without forgetting early architecture choices made by candidate.',
     technicalDetails: [
       'Sliding context buffer with semantic summarization',
@@ -128,6 +133,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-6',
     title: 'Real-Time Evaluation System',
     subtitle: '4-Vector Scoring Matrix',
+    track: 'AI Deployment & Production',
     description: 'Scores every candidate answer on Clarity (25%), Technical Depth (25%), System Design (25%), and Trade-offs Analysis (25%).',
     technicalDetails: [
       'Structured schema output with micro-evaluations per turn',
@@ -145,6 +151,7 @@ export const ARCHITECTURE_NODES: ArchitectureNode[] = [
     id: 'node-7',
     title: 'Personalized Feedback Engine',
     subtitle: 'Comprehensive Hiring Report',
+    track: 'RAG Systems',
     description: 'Generates detailed end-of-interview report with overall percentage score, strength analysis, recommended growth areas, and hiring recommendation.',
     technicalDetails: [
       'Overall hiring readiness score (0-100%)',

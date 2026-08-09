@@ -204,7 +204,7 @@ export default function App() {
         )}
 
         {activeTab === 'architecture' && (
-          <ArchitectureView />
+          <ArchitectureView onSelectTrackAndStart={handleSelectTrackAndStart} />
         )}
 
         {activeTab === 'analytics' && (

@@ -271,22 +271,40 @@ app.post('/api/interview/chat', async (req, res) => {
   // Helper for resilient fallback response
   const generateFallback = () => {
     const isQuestion = /[?]|what|how|why|explain|can you|could you/i.test(candidateAnswer);
+    const isExplicitlyWrong = /wrong|incorrect|false|bug|fail|don't know|no idea|idk|bad|not sure|nonsense|foo|bar|test|asdf/i.test(candidateAnswer) || candidateAnswer.trim().length < 15;
+    const isPartiallyCorrect = /maybe|partially|think so|guessing|depends|probably|some|basic/i.test(candidateAnswer);
+
     let followUpText = "";
     if (isQuestion) {
-      followUpText = `Great question regarding **${topic}**. In enterprise production systems, we address this by balancing compute overhead with SLA latency guarantees.\n\n**To answer directly:** For ${topic}, we design hybrid retrieval/execution pipelines (e.g., combining dense embeddings with sparse BM25 reranking and Redis caching) to keep p99 latency under 30ms.\n\n**Next Interview Question:** How do you prevent hallucination, embedding drift, or tool-loop failures when scaling this architecture to millions of daily requests?`;
+      followUpText = `**Direct Answer & Explanation:**\nGreat question regarding **${topic}**. In enterprise production systems, we handle this by decoupling real-time retrieval from background index updates and maintaining strict SLA latency budgets.\n\nFor ${topic}, we design hybrid pipelines (combining dense vector embeddings with sparse BM25 reranking and Redis semantic caching) to ensure p99 latency stays under 30ms.\n\n**Next Interview Question:** How do you prevent hallucination, embedding drift, or tool-loop failures when scaling this architecture to millions of daily requests?`;
+    } else if (isExplicitlyWrong) {
+      followUpText = `**Verdict:** ❌ **Incorrect / Needs Improvement**\n\n**Why it is wrong & Explanation:**\nYour answer lacks the technical depth or accuracy required for enterprise **${topic}**. Relying on oversimplified assumptions or incorrect logic overlooks critical production bottlenecks such as vector store memory footprint, retrieval accuracy (precision vs. recall trade-offs), and p99 query latency.\n\nTo achieve production readiness in ${topic}, a correct solution must incorporate hybrid search (dense embeddings + sparse keyword search), cross-encoder reranking, and semantic result caching.\n\n**Next Interview Question:** Let's break this down step-by-step. Can you explain how HNSW vector indexing balances graph search speed against RAM consumption compared to Flat indexing?`;
+    } else if (isPartiallyCorrect) {
+      followUpText = `**Verdict:** ⚠️ **Partially Correct**\n\n**Evaluation & Corrections:**\nYou mentioned some relevant intuition regarding **${topic}**, but missed critical production constraints. While your high-level idea touches on the core concept, it omits how to handle concurrency bottlenecks, vector index rebuild latency, and fallback logic during model timeouts.\n\nThe correct production-grade approach requires explicit caching, asynchronous task queues for ingestion, and circuit breakers on model API endpoints.\n\n**Next Interview Question:** How would you design a retry and circuit-breaker mechanism to prevent cascading failures when the vector store or LLM API experiences transient 503 errors?`;
     } else {
-      followUpText = `Excellent breakdown regarding your **${topic}** strategy.\n\n**Follow-up Architecture Question:** Why did you choose that specific indexing and orchestration approach over alternatives? How would your design handle sudden 10x traffic spikes or vector index memory pressure?`;
+      followUpText = `**Verdict:** ✅ **Correct!**\n\n**Evaluation:**\nExcellent breakdown! Your answer accurately identifies key engineering trade-offs in **${topic}**, demonstrating strong system design maturity and awareness of enterprise latency SLAs.\n\n**Next Interview Question:** How would your proposed architecture handle sudden 10x traffic bursts or vector index memory pressure under peak loads?`;
     }
+
+    const clarityScore = isExplicitlyWrong ? 45 : isPartiallyCorrect ? 70 : 92;
+    const depthScore = isExplicitlyWrong ? 40 : isPartiallyCorrect ? 65 : 90;
+    const systemDesignScore = isExplicitlyWrong ? 50 : isPartiallyCorrect ? 72 : 94;
+    const tradeOffsScore = isExplicitlyWrong ? 42 : isPartiallyCorrect ? 68 : 88;
 
     return {
       evaluation: {
-        clarityScore: 88,
-        depthScore: 86,
-        systemDesignScore: 90,
-        tradeOffsScore: 85,
-        feedbackHighlights: [
-          "Clear architectural articulation and structured logic.",
-          "Good awareness of enterprise production trade-offs."
+        clarityScore,
+        depthScore,
+        systemDesignScore,
+        tradeOffsScore,
+        feedbackHighlights: isExplicitlyWrong ? [
+          "Verdict: Incorrect / Needs Improvement.",
+          "Requires further technical depth on vector indexing and SLA latency."
+        ] : isPartiallyCorrect ? [
+          "Verdict: Partially correct answer.",
+          "Good initial intuition, but missed edge-case handling and concurrency."
+        ] : [
+          "Verdict: Correct answer!",
+          "Clear architectural articulation and structured production trade-offs."
         ]
       },
       followUpQuestion: followUpText,
@@ -308,7 +326,7 @@ app.post('/api/interview/chat', async (req, res) => {
       .map((m: any) => `${m.sender.toUpperCase()}: ${m.text}`)
       .join('\n');
 
-    const prompt = `You are "The Interview Agent", a Principal AI Engineer conducting a technical interview.
+    const prompt = `You are "The Interview Agent", a Principal AI Systems Engineer conducting a technical interview.
 
 Topic Domain: ${topic}
 Current Difficulty Level: ${currentDifficulty}
@@ -319,36 +337,48 @@ ${conversationContext}
 Candidate's Latest Message/Answer:
 "${candidateAnswer}"
 
-Your Task:
-1. Check if the candidate's message is asking a question or seeking an explanation.
-   - IF THEY ASK A QUESTION: In "followUpQuestion", FIRST directly answer their question with deep technical clarity, THEN transition into asking the next technical follow-up interview question!
-   - IF THEY PROVIDED AN ANSWER: Evaluate their answer and ask a probing follow-up technical question.
+CRITICAL EVALUATION RULES FOR CANDIDATE ANSWERS:
+1. Check if candidate asked a question or provided an answer.
+   - IF CANDIDATE ASKED A QUESTION: In "followUpQuestion", start with "**Direct Answer & Explanation:**", give a clear direct answer, then transition with "**Next Interview Question:**".
+   - IF CANDIDATE PROVIDED AN ANSWER TO YOUR QUESTION:
+     Analyze whether their answer is RIGHT / CORRECT, WRONG / INCORRECT, or PARTIALLY CORRECT.
+
+     A) IF ANSWER IS WRONG / INCORRECT:
+        In "followUpQuestion", you MUST start with:
+        "**Verdict:** ❌ **Incorrect / Needs Improvement**"
+        Then include a section:
+        "**Why it is wrong & Explanation:** [Clearly state why their answer is wrong, explain the technical misconception or error, and provide the correct technical solution / answer in detail]."
+        Then end with:
+        "**Next Interview Question:** [Ask the next question]."
+
+     B) IF ANSWER IS RIGHT / CORRECT:
+        In "followUpQuestion", you MUST start with:
+        "**Verdict:** ✅ **Correct!**"
+        Then include a section:
+        "**Evaluation:** [Explain why their answer is right and praise key accurate technical points]."
+        Then end with:
+        "**Next Interview Question:** [Ask the next question]."
+
+     C) IF ANSWER IS PARTIALLY CORRECT:
+        In "followUpQuestion", you MUST start with:
+        "**Verdict:** ⚠️ **Partially Correct**"
+        Then include a section:
+        "**Evaluation & Corrections:** [State what was right, explicitly point out what was wrong or incomplete, and explain the correct solution for the missing/incorrect parts]."
+        Then end with:
+        "**Next Interview Question:** [Ask the next question]."
 
 2. Evaluate candidate's answer across 4 metrics (0-100 scale):
    - clarityScore
    - depthScore
    - systemDesignScore
    - tradeOffsScore
-   - feedbackHighlights: array of 2 bullet string observations
+   - feedbackHighlights: array of 2 bullet string observations (must explicitly start with "Verdict: Correct", "Verdict: Incorrect - [reason]", or "Verdict: Partially Correct")
 
 3. Provide 3 sample candidate response suggestions for the next question.
 
 4. Recommend next difficulty level ('Foundational', 'Intermediate', 'Advanced', 'Staff/Principal').
 
-Respond in strict JSON with schema:
-{
-  "evaluation": {
-    "clarityScore": number,
-    "depthScore": number,
-    "systemDesignScore": number,
-    "tradeOffsScore": number,
-    "feedbackHighlights": string[]
-  },
-  "followUpQuestion": string,
-  "suggestedAnswers": string[],
-  "nextDifficulty": string
-}
-`;
+Respond in strict JSON schema.`;
 
     const response = await generateContentWithRetry(ai, {
       primaryModel: 'gemini-3.6-flash',

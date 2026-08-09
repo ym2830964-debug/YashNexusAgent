@@ -213,7 +213,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </div>
                   <div className="flex items-center justify-between text-slate-400">
                     <span>Modules Passed:</span>
-                    <span className="text-purple-400 font-bold">{candidate.completedModules.filter(m => m.completed).length} / {candidate.completedModules.length}</span>
+                    <span className="text-purple-400 font-bold">
+                      {(candidate?.completedModules || []).filter(m => m.completed).length} / {(candidate?.completedModules || []).length}
+                    </span>
                   </div>
                 </div>
                 <div className="pt-2 border-t border-slate-800 flex gap-2">
