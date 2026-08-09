@@ -19,6 +19,26 @@ export default function App() {
   const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState<boolean>(false);
 
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('theme');
+    return (saved === 'light' || saved === 'dark') ? saved : 'dark';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('theme', theme);
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    } else {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
+
   const [interviewState, setInterviewState] = useState<InterviewState>({
     currentQuestionIndex: 1,
     maxQuestions: 10,
@@ -157,7 +177,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050816] text-slate-100 font-sans selection:bg-cyan-500 selection:text-[#050816]">
+    <div className={`min-h-screen font-sans transition-colors duration-200 ${
+      theme === 'light' 
+        ? 'light bg-slate-50 text-slate-900 selection:bg-amber-400 selection:text-black' 
+        : 'dark bg-[#050816] text-slate-100 selection:bg-cyan-500 selection:text-[#050816]'
+    }`}>
       
       {/* Fixed Glass Navbar */}
       <Navbar
@@ -167,6 +191,8 @@ export default function App() {
         isAudioMuted={isAudioMuted}
         setIsAudioMuted={setIsAudioMuted}
         onOpenFeedback={() => setIsFeedbackModalOpen(true)}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Global Feedback Modal */}

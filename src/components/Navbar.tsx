@@ -14,7 +14,9 @@ import {
   Sparkles,
   ChevronRight,
   ShieldCheck,
-  MessageSquare
+  MessageSquare,
+  Sun,
+  Moon
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -24,6 +26,8 @@ interface NavbarProps {
   isAudioMuted: boolean;
   setIsAudioMuted: (muted: boolean | ((prev: boolean) => boolean)) => void;
   onOpenFeedback?: () => void;
+  theme?: 'dark' | 'light';
+  onToggleTheme?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -32,7 +36,9 @@ export const Navbar: React.FC<NavbarProps> = ({
   candidate,
   isAudioMuted,
   setIsAudioMuted,
-  onOpenFeedback
+  onOpenFeedback,
+  theme = 'dark',
+  onToggleTheme
 }) => {
   const [showProfilePopover, setShowProfilePopover] = useState(false);
   const [dbStatus, setDbStatus] = useState<string>('Cloud SQL Connected (us-west1)');
@@ -163,6 +169,32 @@ export const Navbar: React.FC<NavbarProps> = ({
               </>
             )}
           </button>
+
+          {/* Theme Toggle */}
+          {onToggleTheme && (
+            <button
+              id="theme-toggle-btn"
+              onClick={onToggleTheme}
+              title={theme === 'dark' ? "Switch to White / Light Theme" : "Switch to Dark Theme"}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all border ${
+                theme === 'light'
+                  ? 'bg-amber-100 text-amber-900 border-amber-400 hover:bg-amber-200 shadow-sm'
+                  : 'bg-[#0B1120] text-slate-300 border-slate-800 hover:text-white hover:border-slate-700'
+              }`}
+            >
+              {theme === 'light' ? (
+                <>
+                  <Sun className="w-4 h-4 text-amber-600 animate-spin" style={{ animationDuration: '12s' }} />
+                  <span className="hidden sm:inline">Light</span>
+                </>
+              ) : (
+                <>
+                  <Moon className="w-4 h-4 text-cyan-400" />
+                  <span className="hidden sm:inline">Dark</span>
+                </>
+              )}
+            </button>
+          )}
 
           {/* Primary CTA */}
           <button

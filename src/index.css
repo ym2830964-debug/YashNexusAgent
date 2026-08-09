@@ -1,1 +1,59 @@
 @import "tailwindcss";
+
+/* Light theme global overrides */
+html.light, body.light, .light {
+  color-scheme: light;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-\[\#050816\],
+html.light .bg-\[\#030712\],
+html.light .bg-\[\#050814\] {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-\[\#0B1120\] {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-slate-900,
+html.light .bg-slate-950,
+html.light .bg-slate-900\/90,
+html.light .bg-slate-900\/50,
+html.light .bg-slate-950\/90,
+html.light .bg-slate-950\/60 {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .border-slate-800,
+html.light .border-slate-800\/80,
+html.light .border-slate-800\/50,
+html.light .border-slate-700 {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .text-slate-100,
+html.light .text-slate-200 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-300,
+html.light .text-slate-400 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+html.light header {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light footer {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
